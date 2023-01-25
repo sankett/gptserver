@@ -11,8 +11,8 @@ const configuration = new Configuration({
 const app = express();
 const port = 3000;
 
-/*const openai = new OpenAIApi(configuration);
-process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;*/
+const openai = new OpenAIApi(configuration);
+process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
 
 app.get('/', async (req, res) => {
     
