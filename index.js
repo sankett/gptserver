@@ -19,6 +19,10 @@ app.get('/', async (req, res) => {
     res.send({ data: "data"});
 });
 
+app.get('/test', async (req, res) => {
+    
+  res.send({ data: "test"});
+});
 /*app.get('/moderation', async (req, res) => {
     const response = await openai.createModeration({
         input: `Write a Job Description for a 6 years experienced Full Stack engineer with expertise in React.JS`,
