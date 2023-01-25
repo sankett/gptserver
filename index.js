@@ -1,4 +1,6 @@
 const express = require('express');
+const axios = require('axios');
+
 const { Configuration, OpenAIApi } = require('openai');
 const dotenv = require('dotenv');
 dotenv.config();
@@ -9,14 +11,15 @@ const configuration = new Configuration({
 const app = express();
 const port = 3000;
 
-const openai = new OpenAIApi(configuration);
+/*const openai = new OpenAIApi(configuration);
+process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;*/
 
-
-app.get('/', (req, res) => {
-  res.send('Hello World!');
+app.get('/', async (req, res) => {
+    
+    res.send({ data: "data"});
 });
 
-app.get('/moderation', async (req, res) => {
+/*app.get('/moderation', async (req, res) => {
     const response = await openai.createModeration({
         input: `Write a Job Description for a 6 years experienced Full Stack engineer with expertise in React.JS`,
       });
@@ -40,7 +43,7 @@ app.get('/short', async (req, res) => {
     const promptOutput = response.data.choices.pop(); 
    
     res.status(200).json({ output: promptOutput });
-});
+});*/
 
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`);
