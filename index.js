@@ -10,7 +10,7 @@ const app = express();
 const port = 3000;
 
 const openai = new OpenAIApi(configuration);
-process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
+
 
 app.get('/', (req, res) => {
   res.send('Hello World!');
