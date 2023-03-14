@@ -1,65 +1,85 @@
 const express = require('express');
-const axios = require('axios');
-const cors = require('cors')
-const bodyParser = require('body-parser')
-
+var bodyParser = require('body-parser')
 const { Configuration, OpenAIApi } = require('openai');
 const dotenv = require('dotenv');
+var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
+const cors = require('cors');
+
+
 dotenv.config();
 const configuration = new Configuration({
     apiKey: process.env.OPENAI_API_KEY,
 });
 
 const app = express();
+app.use(bodyParser.json());
+
+
 const port = 3000;
 
 const openai = new OpenAIApi(configuration);
 process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
 
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json())
 app.use(cors({
   origin: '*'
 }));
 
-app.get('/', async (req, res) => {
-    
-    res.send({ data: "data"});
+
+app.get('/', (req, res) => {
+  res.send('Hello World!');
 });
 
-app.get('/test', async (req, res) => {
-    
-  res.send({ data: "test"});
-});
-app.post('/moderation', async (req, res) => {
+app.post('/api/moderation', async (req, res) => {  
     const response = await openai.createModeration({
-        input: req.body.userInput,
-      });
-    const flagged = response.data.results[0].flagged;
-      
-    res.status(200).json({ flagged: flagged });
+        input: req.body.input,
+      });    
+     
+    res.status(200).json({ response: response.data });
 });
 
-app.post('/short', async (req, res) => {
+
+
+
+app.post('/api/chat', async (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream'); //added
+  res.setHeader('Cache-Control', 'no-cache');//added
+
+  var xhr = new XMLHttpRequest();
+  xhr.open("POST", "https://api.openai.com/v1/chat/completions");
+  xhr.setRequestHeader("Content-Type", "application/json");
+  xhr.setRequestHeader("Authorization", "Bearer " + process.env.OPENAI_API_KEY);
+  let content = "";
+  xhr.onreadystatechange = function () {
+    if(this.readyState === 3){      
+      var newData = this.responseText.substr(this.seenBytes); 
+      const arr = newData.split("\n\n");          
+      arr.pop();
+      arr.forEach((data, index) => {                     
+        if (data.indexOf("[DONE]") === -1) { 
+          const currentData = data.trim().replace("data:","");  
+          if(currentData !== ""){          
+            const delta = JSON.parse(currentData).choices[0].delta;
+            content = delta.content ? delta.content : ""; 
+            res.write(`${content}`);       
+          }                
+        }                                        
+      })
+      xhr.seenBytes = this.responseText.length;
+    }
+    if (this.readyState === 4) {      
+      res.end(); 
+    }
+  };
+
+  var data = JSON.stringify({
+    "model": "gpt-3.5-turbo",
+    "messages": req.body.chatList,
+    "stream": true
+  });
   
-  const {userInput} = req.body;
-  console.log(userInput)
- const prompt = userInput.preprompt + userInput.prompt
-    const response = await openai.createCompletion({
-        model: userInput.model,
-        prompt: prompt,
-        max_tokens: userInput.max_tokens,
-        temperature:userInput.temperature,
-        top_p: userInput.top_p,
-        frequency_penalty: userInput.frequency_penalty,
-        presence_penalty: userInput.presence_penalty,
-        stream: userInput.stream,
-    });
-
-    const promptOutput = response.data.choices.pop(); 
-   
-    res.status(200).json({ output: promptOutput });
+  xhr.send(data);
 });
+
 
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`);
